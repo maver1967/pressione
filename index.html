@@ -56,6 +56,10 @@
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                             Esporta per Excel (CSV)
                         </button>
+                        <button id="btn-open-sheets-modal" class="dropdown-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                            🟢 Sincronizza Google Sheets
+                        </button>
                         <button id="btn-export-json" class="dropdown-item">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
                             Backup Completo (JSON)
@@ -720,6 +724,29 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- MODAL CONFIGURAZIONE GOOGLE SHEETS -->
+    <div id="modal-sheets" class="modal-overlay hidden">
+        <div class="modal-content glass-panel" style="max-width: 580px;">
+            <div class="modal-header">
+                <h2>🟢 Sincronizzazione Google Sheets</h2>
+                <button id="btn-close-sheets-modal" class="btn-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 16px;">
+                    Incolla qui l'URL della tua WebApp Google Apps Script per sincronizzare automaticamente le misurazioni in tempo reale tra Smartphone, Mac e PC.
+                </p>
+                <div class="form-group">
+                    <label for="sheets-web-url">URL Google Apps Script (Web App):</label>
+                    <input type="url" id="sheets-web-url" class="form-control" placeholder="https://script.google.com/macros/s/.../exec">
+                </div>
+                <div class="modal-footer mt-4">
+                    <button type="button" id="btn-sync-now" class="btn btn-secondary">🔄 Sincronizza Ora</button>
+                    <button type="button" id="btn-save-sheets-url" class="btn btn-primary">Salva URL</button>
+                </div>
+            </div>
         </div>
     </div>
 

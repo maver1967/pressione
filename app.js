@@ -88,6 +88,11 @@ class CardioPulseApp {
             const raw = localStorage.getItem('cardiopulse_readings');
             this.readings = raw ? JSON.parse(raw) : [];
 
+            // Load saved Google Sheets URL
+            this.sheetsUrl = localStorage.getItem('cardiopulse_sheets_url') || '';
+            const urlInput = document.getElementById('sheets-web-url');
+            if (urlInput && this.sheetsUrl) urlInput.value = this.sheetsUrl;
+
             // Load saved report info
             const pInfo = localStorage.getItem('cardiopulse_patient');
             if (pInfo) {
@@ -96,6 +101,11 @@ class CardioPulseApp {
                 document.getElementById('rep-patient-dob').value = info.dob || '';
                 document.getElementById('rep-doctor-name').value = info.doctor || '';
                 document.getElementById('rep-medications').value = info.meds || '';
+            }
+
+            // Sync from Google Sheets if URL configured
+            if (this.sheetsUrl) {
+                this.fetchFromGoogleSheets(false);
             }
         } catch (e) {
             console.error('Error loading LocalStorage', e);
@@ -159,6 +169,12 @@ class CardioPulseApp {
         document.getElementById('empty-add-btn')?.addEventListener('click', () => this.openEntryModal());
         document.getElementById('btn-close-modal').addEventListener('click', () => this.closeEntryModal());
         document.getElementById('btn-cancel-modal').addEventListener('click', () => this.closeEntryModal());
+
+        // Google Sheets Modal Triggers
+        document.getElementById('btn-open-sheets-modal')?.addEventListener('click', () => this.openSheetsModal());
+        document.getElementById('btn-close-sheets-modal')?.addEventListener('click', () => this.closeSheetsModal());
+        document.getElementById('btn-save-sheets-url')?.addEventListener('click', () => this.saveSheetsUrl());
+        document.getElementById('btn-sync-now')?.addEventListener('click', () => this.fetchFromGoogleSheets(true));
 
         // Dropdown Menu Toggle
         const dropdownBtn = document.getElementById('menu-dropdown-btn');
@@ -434,7 +450,99 @@ class CardioPulseApp {
         this.saveStorage();
         this.closeEntryModal();
         this.renderAll();
+        
+        // Sync to Google Sheets if configured
+        if (this.sheetsUrl) {
+            this.postToGoogleSheets(readingData);
+        }
+
         this.showToast(this.editingId ? 'Misurazione aggiornata!' : 'Nuova misurazione salvata!');
+    }
+
+    // --- GOOGLE SHEETS SYNC METHODS ---
+    openSheetsModal() {
+        document.getElementById('modal-sheets')?.classList.remove('hidden');
+    }
+
+    closeSheetsModal() {
+        document.getElementById('modal-sheets')?.classList.add('hidden');
+    }
+
+    saveSheetsUrl() {
+        const url = document.getElementById('sheets-web-url').value.trim();
+        this.sheetsUrl = url;
+        localStorage.setItem('cardiopulse_sheets_url', url);
+        this.closeSheetsModal();
+        if (url) {
+            this.fetchFromGoogleSheets(true);
+        } else {
+            this.showToast('URL Google Sheets rimosso.');
+        }
+    }
+
+    fetchFromGoogleSheets(showToastNotice = true) {
+        if (!this.sheetsUrl) return;
+
+        fetch(this.sheetsUrl)
+            .then(res => res.json())
+            .then(remoteData => {
+                if (Array.isArray(remoteData) && remoteData.length > 0) {
+                    const existingIds = new Set(this.readings.map(r => r.id));
+                    let addedCount = 0;
+
+                    remoteData.forEach(item => {
+                        if (item.id && !existingIds.has(item.id)) {
+                            this.readings.push({
+                                id: String(item.id),
+                                timestamp: Number(item.timestamp) || new Date(`${item.date}T${item.time}`).getTime(),
+                                date: String(item.date),
+                                time: String(item.time),
+                                tod: String(item.tod || 'Mattina'),
+                                sys: Number(item.sys),
+                                dia: Number(item.dia),
+                                pulse: Number(item.pulse),
+                                arm: String(item.arm || ''),
+                                position: String(item.position || ''),
+                                notes: String(item.notes || ''),
+                                tags: Array.isArray(item.tags) ? item.tags : []
+                            });
+                            addedCount++;
+                        }
+                    });
+
+                    if (addedCount > 0) {
+                        this.readings.sort((a, b) => b.timestamp - a.timestamp);
+                        this.saveStorage();
+                        this.renderAll();
+                    }
+                    if (showToastNotice) {
+                        this.showToast(`Sincronizzazione completata: ${addedCount} nuove misurazioni.`);
+                    }
+                } else if (showToastNotice) {
+                    this.showToast('Google Sheets sincronizzato: Nessun nuovo dato.');
+                }
+            })
+            .catch(err => {
+                console.error('Errore sincronizzazione Google Sheets:', err);
+                if (showToastNotice) {
+                    this.showToast('Errore durante la sincronizzazione con Google Sheets.');
+                }
+            });
+    }
+
+    postToGoogleSheets(readingData) {
+        if (!this.sheetsUrl) return;
+
+        fetch(this.sheetsUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(readingData)
+        })
+        .then(() => {
+            this.showToast('Inviato a Google Sheets ☁️');
+        })
+        .catch(err => console.error('Errore invio a Google Sheets:', err));
     }
 
     deleteReading(id) {
