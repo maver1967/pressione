@@ -71,12 +71,6 @@ class CardioPulseApp {
 
     init() {
         this.loadStorage();
-
-        // Seed demo data if empty on first launch
-        if (this.readings.length === 0) {
-            this.seedDemoData();
-        }
-
         this.bindEvents();
         this.initTheme();
         this.renderAll();
