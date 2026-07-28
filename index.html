@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="it" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CardioPulse Pro - Controllo Pressione Arteriosa & Salute Cardiaca</title>
+    <meta name="description" content="Applicazione web professionale per il monitoraggio della pressione arteriosa, analisi clinica ESH/ESC, grafici interattivi e referti stampabili per il medico.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <!-- App Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Header / Navbar -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="brand">
+                <div class="brand-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                        <path d="M12 5v14m-4-7h8" class="pulse-line"/>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <h1>CardioPulse <span>Pro</span></h1>
+                    <p class="brand-tagline">Diario & Analisi Clinica della Pressione</p>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <button id="btn-quick-add" class="btn btn-primary btn-pulse" title="Nuova Misurazione">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    <span>Nuova Misurazione</span>
+                </button>
+
+                <button id="btn-theme-toggle" class="btn btn-icon" title="Cambia Tema">
+                    <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41"></path></svg>
+                    <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>
+                </button>
+
+                <div class="dropdown">
+                    <button class="btn btn-icon dropdown-toggle" id="menu-dropdown-btn" title="Opzioni e Backup">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                    </button>
+                    <div class="dropdown-menu" id="menu-dropdown">
+                        <button id="btn-export-csv" class="dropdown-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            Esporta per Excel (CSV)
+                        </button>
+                        <button id="btn-export-json" class="dropdown-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                            Backup Completo (JSON)
+                        </button>
+                        <label for="input-import-json" class="dropdown-item clickable">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                            Ripristina Backup (JSON)
+                        </label>
+                        <input type="file" id="input-import-json" accept=".json" style="display: none;">
+                        <hr>
+                        <button id="btn-load-demo" class="dropdown-item">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"></path></svg>
+                            Carica Dati Demo (Esempio)
+                        </button>
+                        <button id="btn-clear-all" class="dropdown-item text-danger">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            Svuota Tutti i Dati
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sub-Nav / Tabs -->
+    <nav class="app-nav">
+        <div class="nav-container">
+            <button class="nav-tab active" data-target="tab-dashboard">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+                Dashboard
+            </button>
+            <button class="nav-tab" data-target="tab-charts">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                Grafici & Trend
+            </button>
+            <button class="nav-tab" data-target="tab-history">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                Registro Diario (<span id="total-count-badge">0</span>)
+            </button>
+            <button class="nav-tab" data-target="tab-report">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                Stampa Referto Medico
+            </button>
+            <button class="nav-tab" data-target="tab-guide">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                Guida Clinica
+            </button>
+        </div>
+    </nav>
+
+    <!-- Banner Crisi Ipertensiva (Nascosto di default) -->
+    <div id="alert-crisis-banner" class="alert-banner alert-danger hidden">
+        <div class="alert-content">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            <div>
+                <strong>ATTENZIONE: Rilevata Misurazione Critica!</strong>
+                <p>Una delle tue ultime misurazioni rientra nel range di <em>Crisi Ipertensiva</em> (SYS ≥ 180 o DIA ≥ 120). Riposa 5 minuti e ripeti la misurazione. Se i valori persistono elevati o avverti dolori al petto, affanno o forte mal di testa, contatta immediatamente un medico o il 112/118.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="main-container">
+
+        <!-- TAB 1: DASHBOARD -->
+        <section id="tab-dashboard" class="tab-page active">
+            <!-- Filter Bar for Dashboard -->
+            <div class="period-filter-bar">
+                <span class="filter-label">Periodo di Analisi:</span>
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-filter active" data-period="7">Ultimi 7 Giorni</button>
+                    <button class="btn btn-sm btn-filter" data-period="30">Ultimi 30 Giorni</button>
+                    <button class="btn btn-sm btn-filter" data-period="90">Ultimi 90 Giorni</button>
+                    <button class="btn btn-sm btn-filter" data-period="all">Tutte le Misurazioni</button>
+                </div>
+            </div>
+
+            <!-- KPI Cards Grid -->
+            <div class="kpi-grid">
+                <!-- Card 1: Ultima Misurazione -->
+                <div class="kpi-card latest-card">
+                    <div class="card-header">
+                        <span class="card-title">Ultima Misurazione</span>
+                        <span id="latest-time" class="timestamp-badge">--</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="bp-numbers">
+                            <div class="bp-val">
+                                <span class="val-number" id="latest-sys">--</span>
+                                <span class="val-unit">SYS (Max)</span>
+                            </div>
+                            <span class="bp-slash">/</span>
+                            <div class="bp-val">
+                                <span class="val-number" id="latest-dia">--</span>
+                                <span class="val-unit">DIA (Min)</span>
+                            </div>
+                            <div class="pulse-val">
+                                <span class="val-number" id="latest-pulse">--</span>
+                                <span class="val-unit">BPM ❤️</span>
+                            </div>
+                        </div>
+                        <div class="category-badge" id="latest-category-badge">
+                            Nessun Dato Inserito
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Media Generale Periodo -->
+                <div class="kpi-card">
+                    <div class="card-header">
+                        <span class="card-title">Media Periodo (<span class="period-text">7 giorni</span>)</span>
+                        <span class="icon-bubble">📊</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="bp-numbers small">
+                            <div class="bp-val">
+                                <span class="val-number" id="avg-sys">--</span>
+                                <span class="val-unit">SYS Media</span>
+                            </div>
+                            <span class="bp-slash">/</span>
+                            <div class="bp-val">
+                                <span class="val-number" id="avg-dia">--</span>
+                                <span class="val-unit">DIA Media</span>
+                            </div>
+                            <div class="pulse-val">
+                                <span class="val-number" id="avg-pulse">--</span>
+                                <span class="val-unit">BPM Medi</span>
+                            </div>
+                        </div>
+                        <div class="kpi-subtext" id="avg-category-desc">Stato clinico medio nel periodo</div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Mattina vs Sera -->
+                <div class="kpi-card">
+                    <div class="card-header">
+                        <span class="card-title">Confronto Orario</span>
+                        <span class="icon-bubble">🌅/🌃</span>
+                    </div>
+                    <div class="card-body split-metrics">
+                        <div class="metric-box">
+                            <div class="metric-label">☀️ Mattina</div>
+                            <div class="metric-val" id="morning-avg">-- / --</div>
+                        </div>
+                        <div class="metric-divider"></div>
+                        <div class="metric-box">
+                            <div class="metric-label">🌙 Sera</div>
+                            <div class="metric-val" id="evening-avg">-- / --</div>
+                        </div>
+                    </div>
+                    <div class="kpi-subtext">Valutazione variazione circadiana</div>
+                </div>
+
+                <!-- Card 4: Indici Clinici Speciali (PAM & dPP) -->
+                <div class="kpi-card">
+                    <div class="card-header">
+                        <span class="card-title">Indici Clinici</span>
+                        <span class="icon-bubble">🩺</span>
+                    </div>
+                    <div class="card-body split-metrics">
+                        <div class="metric-box" title="Pressione Differenziale (SYS - DIA). Ideale tra 30 e 50 mmHg">
+                            <div class="metric-label">Press. Differenziale</div>
+                            <div class="metric-val" id="pp-val">-- <small>mmHg</small></div>
+                        </div>
+                        <div class="metric-divider"></div>
+                        <div class="metric-box" title="Pressione Arteriosa Media (DIA + 1/3 dPP). Ideale tra 70 e 100 mmHg">
+                            <div class="metric-label">Pressione Media (PAM)</div>
+                            <div class="metric-val" id="map-val">-- <small>mmHg</small></div>
+                        </div>
+                    </div>
+                    <div class="kpi-subtext">Parametri di elasticità vascolare</div>
+                </div>
+            </div>
+
+            <!-- Quick Chart Preview Grid on Dashboard -->
+            <div class="dashboard-charts-grid">
+                <div class="chart-card glass-panel">
+                    <div class="chart-card-header">
+                        <h3>Andamento Pressione (Sistolica & Diastolica)</h3>
+                        <span class="chart-legend">
+                            <span class="legend-dot dot-sys"></span> SYS
+                            <span class="legend-dot dot-dia"></span> DIA
+                            <span class="legend-dot dot-pulse"></span> BPM
+                        </span>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="dashboardTrendChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card glass-panel">
+                    <div class="chart-card-header">
+                        <h3>Distribuzione Categorie Cliniche (ESH/ESC)</h3>
+                    </div>
+                    <div class="chart-container donut-container">
+                        <canvas id="dashboardDonutChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: GRAFICI & TREND AVANZATI -->
+        <section id="tab-charts" class="tab-page">
+            <div class="glass-panel chart-detail-panel">
+                <div class="panel-header">
+                    <h2>Analisi Grafica Dettagliata</h2>
+                    <p>Visualizza l'evoluzione temporale, i valori minimi/massimi e la variabilità della frequenza cardiaca.</p>
+                </div>
+                <div class="chart-full-container">
+                    <canvas id="fullTrendChart"></canvas>
+                </div>
+            </div>
+
+            <div class="charts-two-col">
+                <div class="glass-panel">
+                    <div class="panel-header">
+                        <h3>Confronto per Fascia Oraria</h3>
+                        <p>Valori medi di Sistolica e Diastolica suddivisi nei quattro momenti della giornata.</p>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="todBarChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="glass-panel">
+                    <div class="panel-header">
+                        <h3>Statistiche di Sintesi</h3>
+                        <p>Valori estremi e variabilità rilevati nel periodo selezionato.</p>
+                    </div>
+                    <div class="stats-summary-list" id="stats-summary-list">
+                        <!-- Popolato dinamicamente da JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: REGISTRO STORICO & TABELLA -->
+        <section id="tab-history" class="tab-page">
+            <div class="glass-panel">
+                <div class="table-toolbar">
+                    <div class="search-box">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" id="table-search" placeholder="Cerca tra note, sintomi o farmaci...">
+                    </div>
+
+                    <div class="toolbar-filters">
+                        <select id="filter-category-select" class="form-select">
+                            <option value="all">Tutte le Categorie Cliniche</option>
+                            <option value="optimal">Normotensione Ottimale</option>
+                            <option value="normal">Normotensione</option>
+                            <option value="high_normal">Normal-Alta</option>
+                            <option value="stage1">Ipertensione Grado 1</option>
+                            <option value="stage2">Ipertensione Grado 2</option>
+                            <option value="stage3">Ipertensione Grado 3</option>
+                        </select>
+
+                        <select id="filter-tod-select" class="form-select">
+                            <option value="all">Tutte le Fasce Orarie</option>
+                            <option value="Mattina">☀️ Mattina</option>
+                            <option value="Pomeriggio">🌤️ Pomeriggio</option>
+                            <option value="Sera">🌙 Sera</option>
+                            <option value="Notte">🌌 Notte</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Data & Ora</th>
+                                <th>Fascia Oraria</th>
+                                <th>Sistolica (SYS)</th>
+                                <th>Diastolica (DIA)</th>
+                                <th>Pulsazioni (BPM)</th>
+                                <th>Stato Clinico</th>
+                                <th>Dettagli / Note</th>
+                                <th class="text-right">Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body">
+                            <!-- Popolato da JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="table-empty-state" class="empty-state hidden">
+                    <div class="empty-icon">🩺</div>
+                    <h3>Nessuna misurazione trovata</h3>
+                    <p>Inserisci la tua prima misurazione o modifica i filtri di ricerca per visualizzare i dati.</p>
+                    <button class="btn btn-primary" id="empty-add-btn">+ Aggiungi Misurazione</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: STAMPA REFERTO MEDICO -->
+        <section id="tab-report" class="tab-page">
+            <div class="glass-panel no-print">
+                <div class="report-controls-header">
+                    <div>
+                        <h2>Generatore Referto Medico</h2>
+                        <p>Compila i tuoi dati personali per generare un documento pronto da stampare o salvare in PDF per il tuo medico curante.</p>
+                    </div>
+                    <button id="btn-trigger-print" class="btn btn-accent btn-pulse">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                        Stampa / Salva in PDF
+                    </button>
+                </div>
+
+                <div class="report-form-grid">
+                    <div class="form-group">
+                        <label for="rep-patient-name">Nome e Cognome Paziente:</label>
+                        <input type="text" id="rep-patient-name" class="form-control" placeholder="Es. Mario Rossi">
+                    </div>
+                    <div class="form-group">
+                        <label for="rep-patient-dob">Data di Nascita / Età:</label>
+                        <input type="text" id="rep-patient-dob" class="form-control" placeholder="Es. 15/04/1965 (61 anni)">
+                    </div>
+                    <div class="form-group">
+                        <label for="rep-doctor-name">Medico / Cardiologo di Riferimento:</label>
+                        <input type="text" id="rep-doctor-name" class="form-control" placeholder="Es. Dott. Antonio Bianchi">
+                    </div>
+                    <div class="form-group">
+                        <label for="rep-medications">Terapia / Farmaci In Corso:</label>
+                        <input type="text" id="rep-medications" class="form-control" placeholder="Es. Ramipril 5mg (1 cp al mattino)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- ANTEPRIMA REFERTO STAMPABILE (Questo div è quello che appare nella Stampa) -->
+            <div id="medical-report-printable" class="medical-report-sheet">
+                <div class="report-header">
+                    <div class="report-brand">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="32" height="32"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/><path d="M12 5v14m-4-7h8"/></svg>
+                        <div>
+                            <h1>REFERTO CLINICO MONITORAGGIO PRESSIONE ARTERIOSA</h1>
+                            <p class="sub">Diario Pressorio Dettagliato per Consultazione Medica</p>
+                        </div>
+                    </div>
+                    <div class="report-date-tag">
+                        Generato il: <span id="rep-gen-date">28/07/2026</span>
+                    </div>
+                </div>
+
+                <div class="report-patient-box">
+                    <div class="p-row">
+                        <div><strong>PAZIENTE:</strong> <span id="print-patient-name">Non specificato</span></div>
+                        <div><strong>DATA NASCITA / ETÀ:</strong> <span id="print-patient-dob">--</span></div>
+                    </div>
+                    <div class="p-row">
+                        <div><strong>MEDICO CURANTE:</strong> <span id="print-doctor-name">--</span></div>
+                        <div><strong>PERIODO MONITORATO:</strong> <span id="print-period-range">Ultimi 30 Giorni</span></div>
+                    </div>
+                    <div class="p-row" id="print-meds-row">
+                        <div><strong>TERAPIA IN CORSO:</strong> <span id="print-medications">Nessuna indicata</span></div>
+                    </div>
+                </div>
+
+                <!-- Sintesi Statistica Referto -->
+                <div class="report-summary-box">
+                    <h3>Sintesi Statistica del Periodo</h3>
+                    <div class="report-stats-table-wrapper">
+                        <table class="report-stats-table">
+                            <thead>
+                                <tr>
+                                    <th>Totale Misurazioni</th>
+                                    <th>Media Sistolica (MAX)</th>
+                                    <th>Media Diastolica (MIN)</th>
+                                    <th>Media Pulsazioni</th>
+                                    <th>Pressione Differenziale (dPP)</th>
+                                    <th>PAM (Pressione Media)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td id="rep-stat-count">0</td>
+                                    <td id="rep-stat-sys">-- mmHg</td>
+                                    <td id="rep-stat-dia">-- mmHg</td>
+                                    <td id="rep-stat-bpm">-- BPM</td>
+                                    <td id="rep-stat-dpp">-- mmHg</td>
+                                    <td id="rep-stat-pam">-- mmHg</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="report-circadian">
+                        <div class="circadian-box">
+                            <strong>Media Mattutina (☀️ 06:00 - 12:00):</strong>
+                            <span id="rep-circ-morning">-- / -- mmHg</span>
+                        </div>
+                        <div class="circadian-box">
+                            <strong>Media Serale (🌙 18:00 - 24:00):</strong>
+                            <span id="rep-circ-evening">-- / -- mmHg</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabella Dettagliata per il Medico -->
+                <div class="report-log-section">
+                    <h3>Registro Cronologico delle Misurazioni</h3>
+                    <table class="report-log-table">
+                        <thead>
+                            <tr>
+                                <th>Data e Ora</th>
+                                <th>Fascia</th>
+                                <th>SYS (mmHg)</th>
+                                <th>DIA (mmHg)</th>
+                                <th>Pulsazioni (BPM)</th>
+                                <th>Classificazione ESH/ESC</th>
+                                <th>Braccio/Posiz.</th>
+                                <th>Note & Sintomi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="print-log-table-body">
+                            <!-- Popolato da JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Firma del Medico -->
+                <div class="report-footer-signatures">
+                    <div class="sig-box">
+                        <p>Firma del Paziente</p>
+                        <div class="sig-line"></div>
+                    </div>
+                    <div class="sig-box">
+                        <p>Timbro e Firma del Medico</p>
+                        <div class="sig-line"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: GUIDA MEDICO-INFORMATIVA -->
+        <section id="tab-guide" class="tab-page">
+            <div class="glass-panel">
+                <div class="panel-header">
+                    <h2>Guida Pratica alla Misurazione della Pressione</h2>
+                    <p>Standard e linee guida raccomandate dalla Società Europea dell'Ipertensione (ESH/ESC) e dall'AHA.</p>
+                </div>
+
+                <div class="guide-grid">
+                    <div class="guide-card">
+                        <div class="guide-icon">🧘‍♂️</div>
+                        <h3>1. Preparazione Prima della Misurazione</h3>
+                        <ul>
+                            <li>Rimani seduto e rilassato in ambiente tranquillo per almeno <strong>5 minuti</strong> prima di misurare.</li>
+                            <li>Evita di fumare, bere caffè, tè o fare sforzi fisici intensi nei <strong>30 minuti precedenti</strong>.</li>
+                            <li>Svuota la vescica prima della misurazione: una vescica piena può aumentare la sistolica di 10-15 mmHg.</li>
+                        </ul>
+                    </div>
+
+                    <div class="guide-card">
+                        <div class="guide-icon">🪑</div>
+                        <h3>2. Postura Corretta</h3>
+                        <ul>
+                            <li>Siediti con la schiena ben appoggiata allo schienale e i piedi ben piantati a terra (non incrociare le gambe).</li>
+                            <li>Appoggia il braccio su un tavolo in modo che il manicotto si trovi <strong>all'altezza del cuore</strong>.</li>
+                            <li>Non parlare e non muoverti durante la misurazione.</li>
+                        </ul>
+                    </div>
+
+                    <div class="guide-card">
+                        <div class="guide-icon">⏰</div>
+                        <h3>3. Orari e Frequenza Raccomandati</h3>
+                        <ul>
+                            <li>Si consiglia di misurare la pressione <strong>due volte al giorno</strong>:
+                                <ul>
+                                    <li><strong>Mattina:</strong> appena svegli, prima di colazione e prima di assumere farmaci.</li>
+                                    <li><strong>Sera:</strong> prima di cena o prima di coricarsi.</li>
+                                </ul>
+                            </li>
+                            <li>Effettua 2 misurazioni a distanza di 1-2 minuti e registra il valore medio.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Tabelle Classificazione Clinica -->
+                <div class="classification-table-wrapper">
+                    <h3>Tabella di Classificazione della Pressione Arteriosa (ESH/ESC)</h3>
+                    <table class="data-table ref-table">
+                        <thead>
+                            <tr>
+                                <th>Categoria Clinica</th>
+                                <th>Sistolica (SYS / Max)</th>
+                                <th>Diastolica (DIA / Min)</th>
+                                <th>Indicazione Generale</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="row-optimal">
+                                <td><span class="status-dot dot-optimal"></span> <strong>Normotensione Ottimale</strong></td>
+                                <td>&lt; 120 mmHg</td>
+                                <td>&lt; 80 mmHg</td>
+                                <td>Condizione ideale. Mantenere uno stile di vita sano.</td>
+                            </tr>
+                            <tr class="row-normal">
+                                <td><span class="status-dot dot-normal"></span> <strong>Normotensione</strong></td>
+                                <td>120 – 129 mmHg</td>
+                                <td>80 – 84 mmHg</td>
+                                <td>Valori normali e desiderabili.</td>
+                            </tr>
+                            <tr class="row-high-normal">
+                                <td><span class="status-dot dot-high-normal"></span> <strong>Normal-Alta</strong></td>
+                                <td>130 – 139 mmHg</td>
+                                <td>85 – 89 mmHg</td>
+                                <td>Monitorare regolarmente ed eliminare fattori di rischio.</td>
+                            </tr>
+                            <tr class="row-stage1">
+                                <td><span class="status-dot dot-stage1"></span> <strong>Ipertensione Grado 1</strong></td>
+                                <td>140 – 159 mmHg</td>
+                                <td>90 – 99 mmHg</td>
+                                <td>Ipertensione lieve. Consultare il proprio medico.</td>
+                            </tr>
+                            <tr class="row-stage2">
+                                <td><span class="status-dot dot-stage2"></span> <strong>Ipertensione Grado 2</strong></td>
+                                <td>160 – 179 mmHg</td>
+                                <td>100 – 109 mmHg</td>
+                                <td>Ipertensione moderata. Richiede controllo e terapia medica.</td>
+                            </tr>
+                            <tr class="row-stage3">
+                                <td><span class="status-dot dot-stage3"></span> <strong>Ipertensione Grado 3</strong></td>
+                                <td>≥ 180 mmHg</td>
+                                <td>≥ 110 mmHg</td>
+                                <td>Ipertensione grave. Consultare un medico con urgenza.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- MODAL DI INSERIMENTO / MODIFICA MISURAZIONE -->
+    <div id="modal-entry" class="modal-overlay hidden">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2 id="modal-title">Nuova Misurazione Pressione</h2>
+                <button id="btn-close-modal" class="btn-close">&times;</button>
+            </div>
+
+            <form id="form-entry">
+                <input type="hidden" id="entry-id">
+
+                <!-- Real-time Live Category Preview Badge -->
+                <div class="live-category-preview" id="modal-live-preview">
+                    <span class="live-badge" id="modal-badge-text">120 / 80 mmHg — Normotensione</span>
+                </div>
+
+                <div class="form-row-three">
+                    <!-- SYS Input -->
+                    <div class="stepper-card">
+                        <label for="entry-sys">Sistolica (SYS / Max)</label>
+                        <div class="stepper-control">
+                            <button type="button" class="btn-step" data-action="dec" data-target="entry-sys" data-step="1">-1</button>
+                            <input type="number" id="entry-sys" min="60" max="260" value="120" required>
+                            <button type="button" class="btn-step" data-action="inc" data-target="entry-sys" data-step="1">+1</button>
+                        </div>
+                        <div class="quick-step-buttons">
+                            <button type="button" class="btn-chip" data-action="add" data-target="entry-sys" data-val="-5">-5</button>
+                            <button type="button" class="btn-chip" data-action="add" data-target="entry-sys" data-val="+5">+5</button>
+                        </div>
+                    </div>
+
+                    <!-- DIA Input -->
+                    <div class="stepper-card">
+                        <label for="entry-dia">Diastolica (DIA / Min)</label>
+                        <div class="stepper-control">
+                            <button type="button" class="btn-step" data-action="dec" data-target="entry-dia" data-step="1">-1</button>
+                            <input type="number" id="entry-dia" min="40" max="160" value="80" required>
+                            <button type="button" class="btn-step" data-action="inc" data-target="entry-dia" data-step="1">+1</button>
+                        </div>
+                        <div class="quick-step-buttons">
+                            <button type="button" class="btn-chip" data-action="add" data-target="entry-dia" data-val="-5">-5</button>
+                            <button type="button" class="btn-chip" data-action="add" data-target="entry-dia" data-val="+5">+5</button>
+                        </div>
+                    </div>
+
+                    <!-- Pulse Input -->
+                    <div class="stepper-card">
+                        <label for="entry-pulse">Pulsazioni (BPM)</label>
+                        <div class="stepper-control">
+                            <button type="button" class="btn-step" data-action="dec" data-target="entry-pulse" data-step="1">-1</button>
+                            <input type="number" id="entry-pulse" min="30" max="220" value="72" required>
+                            <button type="button" class="btn-step" data-action="inc" data-target="entry-pulse" data-step="1">+1</button>
+                        </div>
+                        <div class="quick-step-buttons">
+                            <button type="button" class="btn-chip" data-action="add" data-target="entry-pulse" data-val="-5">-5</button>
+                            <button type="button" class="btn-chip" data-action="add" data-target="entry-pulse" data-val="+5">+5</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Date & Time Row -->
+                <div class="form-row-two mt-3">
+                    <div class="form-group">
+                        <label for="entry-date">Data Misurazione</label>
+                        <input type="date" id="entry-date" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="entry-time">Ora Misurazione</label>
+                        <input type="time" id="entry-time" class="form-control" required>
+                    </div>
+                </div>
+
+                <!-- Context Tag Selectors -->
+                <div class="form-group mt-3">
+                    <label>Fascia Oraria Auto-Selezionata</label>
+                    <div class="tod-selector-group" id="tod-selector">
+                        <button type="button" class="tod-btn active" data-value="Mattina">☀️ Mattina (06-12)</button>
+                        <button type="button" class="tod-btn" data-value="Pomeriggio">🌤️ Pomeriggio (12-18)</button>
+                        <button type="button" class="tod-btn" data-value="Sera">🌙 Sera (18-24)</button>
+                        <button type="button" class="tod-btn" data-value="Notte">🌌 Notte (00-06)</button>
+                    </div>
+                </div>
+
+                <div class="form-row-two mt-3">
+                    <div class="form-group">
+                        <label for="entry-arm">Braccio Rilevamento</label>
+                        <select id="entry-arm" class="form-select">
+                            <option value="Sinistro">Braccio Sinistro (Consigliato)</option>
+                            <option value="Destro">Braccio Destro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="entry-position">Posizione Corpo</label>
+                        <select id="entry-position" class="form-select">
+                            <option value="Seduto">Seduto (Standard)</option>
+                            <option value="Disteso">Disteso / A letto</option>
+                            <option value="In piedi">In piedi</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Quick Tags -->
+                <div class="form-group mt-3">
+                    <label>Tag & Condizioni Contestuali</label>
+                    <div class="tags-cloud" id="quick-tags-cloud">
+                        <button type="button" class="tag-chip" data-tag="A riposo">🌿 A riposo</button>
+                        <button type="button" class="tag-chip" data-tag="Dopo farmaco">💊 Dopo farmaco</button>
+                        <button type="button" class="tag-chip" data-tag="Prima di mangiare">🥗 Prima pasti</button>
+                        <button type="button" class="tag-chip" data-tag="Dopo caffè">☕ Dopo caffè</button>
+                        <button type="button" class="tag-chip" data-tag="Stressato">⚡ Stressato</button>
+                        <button type="button" class="tag-chip" data-tag="Mal di testa">🤕 Mal di testa</button>
+                        <button type="button" class="tag-chip" data-tag="Dopo attività">🏃 Dopo attività</button>
+                    </div>
+                </div>
+
+                <!-- Notes / Symptoms -->
+                <div class="form-group mt-3">
+                    <label for="entry-notes">Note Aggiuntive / Sintomi</label>
+                    <input type="text" id="entry-notes" class="form-control" placeholder="Es. Misurazione ripetuta dopo 5 min, sensazione di stanchezza...">
+                </div>
+
+                <!-- Modal Footer Actions -->
+                <div class="modal-footer mt-4">
+                    <button type="button" id="btn-cancel-modal" class="btn btn-secondary">Annulla</button>
+                    <button type="submit" class="btn btn-primary btn-pulse">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        Salva Misurazione
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- App JavaScript Logic -->
+    <script src="app.js"></script>
+</body>
+</html>
