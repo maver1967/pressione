@@ -486,11 +486,22 @@ class CardioPulseApp {
 
                     remoteData.forEach(item => {
                         if (item.id && !existingIds.has(item.id)) {
+                            let cleanDate = String(item.date || '');
+                            if (cleanDate.includes('T')) cleanDate = cleanDate.split('T')[0];
+
+                            let cleanTime = String(item.time || '');
+                            if (cleanTime.includes('T')) {
+                                const timePart = cleanTime.split('T')[1];
+                                if (timePart) cleanTime = timePart.substring(0, 5);
+                            } else {
+                                cleanTime = cleanTime.substring(0, 5);
+                            }
+
                             this.readings.push({
                                 id: String(item.id),
-                                timestamp: Number(item.timestamp) || new Date(`${item.date}T${item.time}`).getTime(),
-                                date: String(item.date),
-                                time: String(item.time),
+                                timestamp: Number(item.timestamp) || new Date(`${cleanDate}T${cleanTime}`).getTime() || Date.now(),
+                                date: cleanDate,
+                                time: cleanTime,
                                 tod: String(item.tod || 'Mattina'),
                                 sys: Number(item.sys),
                                 dia: Number(item.dia),
@@ -667,7 +678,11 @@ class CardioPulseApp {
     renderCharts(filtered = this.getFilteredReadings()) {
         const sorted = [...filtered].sort((a, b) => a.timestamp - b.timestamp);
 
-        const labels = sorted.map(r => `${r.date.substring(5)} ${r.time}`);
+        const labels = sorted.map(r => {
+            const d = (r.date || '').split('T')[0];
+            const t = (r.time || '').split('T')[0].substring(0, 5);
+            return `${d.length > 5 ? d.substring(5) : d} ${t}`;
+        });
         const sysData = sorted.map(r => r.sys);
         const diaData = sorted.map(r => r.dia);
         const pulseData = sorted.map(r => r.pulse);
